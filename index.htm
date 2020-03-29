@@ -93,18 +93,21 @@ td {text-align: center;}
 	background-color: #f0f0f0;
 }
 #manual { 
-	
 	margin-left: 10px;
 	float:left;  
 	width:20%; 
 	height:280px;
-} 
+}
+
 #input_section{ 
-	
 	float:center;  
 	width:80%; 
-	height:280px; 
+	height:280px;
 } 
+
+#diagonal {
+	background: linear-gradient(to top right, #fff calc(50% - 1px), #aaa, #fff calc(50% + 1px) )
+}
 </style>
 </head>
 
@@ -114,14 +117,15 @@ td {text-align: center;}
 
 <div id="top_area">
 <div id="manual">
-	<br>Instructions:<br>
-	1. Set the number of chromosomes by dragging the range bar<br>
-	2. Write genotypes into the text boxes<br>
-	3. Click on the little color boxes to change chromosome text colors<br>
-	4: Click on 'Generate' to get the Punnett Square<br><br>
+	<p>Instructions:</p>
+	<ol>
+	<li>Set the number of chromosomes by dragging the range bar</li>
+	<li>Write genotypes into the text boxes</li>
+	<li>Click on the little color boxes to change chromosome text colors</li>
+	<li>Click on 'Generate' to get the Punnett Square</li>
+	</ol>
 	For better printing layout, click the 'Hide Input Area' button first<br>
 </div>
-
 <div id="input_section" align="center">
 	<table class="input_table">
 		<tr><td colspan="5" id="labelN">Number of Chromosomes: 3</td></tr>
@@ -134,6 +138,7 @@ td {text-align: center;}
 	<br><button onclick="generate()">Generate</button>
 </div>
 </div>
+
 <br><br>
 <div id="snackbar">Please fill in all the chromosomes before clicking 'Generate'</div>
 	
@@ -185,7 +190,9 @@ function drawResultTable(male, female) {
 	var table = document.getElementById("table_output");
 	table.innerHTML = "";
 	var firstRow = table.insertRow();
-	firstRow.insertCell();
+	var firstCell = firstRow.insertCell();
+	firstCell.setAttribute("id", "diagonal");
+	firstCell.innerHTML = "<div>"+topRight("Male")+"<br>"+botLeft("Female")+"</div>";
 	for (var i=0; i<male.length; i++)
 		firstRow.insertCell().innerHTML = "<th scope=\"col\">"+joinWithColor(male[i], " ; ")+"</th>";
 	for (var i=0; i<female.length; i++)
@@ -202,6 +209,13 @@ function drawResultTable(male, female) {
 		var cell = rows[i+1].cells[j+1];
 		cell.appendChild(generateResultTableCell(male[j], female[i]));
 	}
+}
+
+function topRight(text) {
+	return "<div style=\"align=\"right\" text-align=\"right\"\">"+text+"</div>";
+}
+function botLeft(text) {
+	return "<div style=\"align=\"left\" text-align=\"right\"\">"+text+"</div>";
 }
 
 function generateResultTableCell(male, female) {
