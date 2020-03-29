@@ -117,13 +117,13 @@ td {text-align: center;}
 	<li>Change chromosome colors by clicking the little color boxes</li>
 	<li>Generate the Punnett Square by clicking on 'Generate'</li>
 	</ol>
-	<p>For better printing layout, click on 'Hide Input Area'</p>
-	<p>To reset everything, click on 'Reset Input'</p>
+	<p>For better printing layout, click on 'Hide Input Area' above</p>
+	<p>To reset everything, click on 'Reset Input' above</p>
 </div>
 <div id="input_section" align="center">
 	<table class="input_table">
 		<tr><td colspan="5" id="labelN">Number of Chromosomes: 3</td></tr>
-		<tr><td colspan="5"><input id="Nbar" type="range" min="1" max="4" value="3" class="slider" onchange="changeN(this.value)" oninput="changeN(this.value)"></td></tr>
+		<tr><td colspan="5"><input id="Nbar" type="range" min="1" max="4" value="3" class="slider" onchange="changeN(this.value, true)" oninput="changeN(this.value, true)"></td></tr>
 		<tr><td style="text-align:left;">1</td><td>&nbsp;</td><td>&nbsp;</td><td style="text-align:right;">4</td></tr>
 	</table>
 	<table id="table_input">
