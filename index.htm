@@ -3,38 +3,27 @@
 <head>
 <title>Punnett Square Generator</title>
 <style>
-input {
-	text-align: center;
-	
-}
-table{
-  border-collapse:collapse;
-}
-td {
-	text-align: center;
-}
+input {text-align: center;}
+table{border-collapse: collapse;}
+td {text-align: center;}
 
 .colorPicker {
 	background-color: transparent;
 	height: 20px;
 	width: 25px;
 }
-.chromosome_input {
-	height: 20px;
-}
-
+.chromosome_input {height: 20px;}
 
 .result_table td{
 	border: 5px solid rgba(103, 155, 155, 0.3);
 }
 
-.result_cell td{
-	border: none;
-}
+.result_cell td{border: none;}
 
 .input_table tr:nth-child(3){
   border-bottom: 20px solid transparent;
 }
+
 .slider {
   -webkit-appearance: none;
   background: #d3d3d3;
@@ -45,6 +34,7 @@ td {
   -webkit-transition: .2s;
   transition: opacity .2s;
 }
+
 .slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
@@ -53,9 +43,7 @@ td {
   background: #4CAF50;
   cursor: pointer;
 }
-.slider:hover {
-  opacity: 1;
-}
+.slider:hover {opacity: 1;}
 
 /* The snackbar - position it at the bottom and in the middle of the screen */
 #snackbar {
@@ -100,50 +88,59 @@ td {
   to {top: 0; opacity: 0;}
 }
 
-.sidenav {
-  position: fixed;
-  width: 250px;
+#top_area {
+	border-left: 10px solid #0055ff;
+	background-color: #f0f0f0;
 }
-
+#manual { 
+	
+	margin-left: 10px;
+	float:left;  
+	width:20%; 
+	height:280px;
+} 
+#input_section{ 
+	
+	float:center;  
+	width:80%; 
+	height:280px; 
+} 
 </style>
 </head>
 
 <body onload="init()">
+
 <button id="toggleInputVisibility" onclick="toggleInputVisibility()">Hide Input Area</button>
-<div class="sidenav">
+
+<div id="top_area">
 <div id="manual">
-<br>Instructions:<br>
-1. Set the number of chromosomes by dragging the range bar<br>
-2. Write genotypes into the text boxes<br>
-3. Click on the little color boxes to change chromosome text colors<br>
-4: Click on 'Generate' to get the Punnett Square<br><br>
-For better printing layout, click the 'Hide Input Area' button first<br>
-</div>
+	<br>Instructions:<br>
+	1. Set the number of chromosomes by dragging the range bar<br>
+	2. Write genotypes into the text boxes<br>
+	3. Click on the little color boxes to change chromosome text colors<br>
+	4: Click on 'Generate' to get the Punnett Square<br><br>
+	For better printing layout, click the 'Hide Input Area' button first<br>
 </div>
 
 <div id="input_section" align="center">
-
-<table class="input_table">
-<tr><td colspan="5" id="labelN">Number of Chromosomes: 3</td></tr>
-<tr><td colspan="5"><input type="range" min="1" max="4" value="3" class="slider" onchange="changeN(this.value)" oninput="changeN(this.value)"></td></tr>
-<tr><td style="text-align:left;">1</td><td>&nbsp;</td><td>&nbsp;</td><td style="text-align:right;">4</td></tr>
-</table>
-
-
-<table id="table_input">
-	<tr/><tr/><tr style="border-bottom: 25px solid transparent"/><tr/><tr/><tr/>
-</table>
-<br>
-<button onclick="generate()">Generate</button><br><br>
-<div id="snackbar">Please fill in all the chromosomes before clicking 'Generate'</div>
-
+	<table class="input_table">
+		<tr><td colspan="5" id="labelN">Number of Chromosomes: 3</td></tr>
+		<tr><td colspan="5"><input type="range" min="1" max="4" value="3" class="slider" onchange="changeN(this.value)" oninput="changeN(this.value)"></td></tr>
+		<tr><td style="text-align:left;">1</td><td>&nbsp;</td><td>&nbsp;</td><td style="text-align:right;">4</td></tr>
+	</table>
+	<table id="table_input">
+		<tr/><tr/><tr style="border-bottom: 25px solid transparent"/><tr/><tr/><tr/>
+	</table>
+	<br><button onclick="generate()">Generate</button><br><br>
+</div>
 </div>
 
+<div id="snackbar">Please fill in all the chromosomes before clicking 'Generate'</div>
+	
 <div id="result_section" align="center" style="visibility: hidden;">
-<!-- <button onclick="rotateTable() hidden">Rotate Table 90 degrees</button> -->
-<button onclick="window.print();">Print</button>
-<br><br>
-<table class="result_table" id="table_output"></table>
+	<button onclick="window.print();">Print</button>
+	<br><br>
+	<table class="result_table" id="table_output"></table>
 </div>
 </body>
 
@@ -155,8 +152,6 @@ var rotation = false;
 var inputVisible = true;
 var colors = {};
 var defaultColor = "#000000"
-colors["carrie"] = "#FF0000";
-colors["wenhao"] = "#0000FF";
 var resultVisible = false;
 
 
@@ -318,20 +313,6 @@ function init() {
 		input_rows[i+2].insertCell();
 	}
 	changeN(3);
-	
-	var manual = document.getElementById("manual");
-	var rect = manual.getBoundingClientRect();
-	var thresh = rect.bottom/2;
-	//console.log(rect.top, rect.right, rect.bottom, rect.left);
-	window.onscroll = function() {
-		var currentScrollPos = window.pageYOffset;
-		console.log(currentScrollPos+" "+thresh);
-		if (currentScrollPos > thresh)
-			manual.style.display = "none";
-		else if (currentScrollPos < 100)
-			manual.style.display = "block";
-		//console.log(currentScrollPos);
-	}
 }
 
 function changeN(newN) {
