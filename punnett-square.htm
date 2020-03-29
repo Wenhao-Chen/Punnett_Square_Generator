@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+input {
+	text-align: center;
+	
+}
+table{
+  border-collapse:collapse;
+}
+td {
+	text-align: center;
+}
+
+.colorPicker {
+	background-color: transparent;
+	height: 20px;
+	width: 25px;
+}
+.chromosome_input {
+	height: 20px;
+}
+
+
+.result_table td{
+	border: 5px solid rgba(103, 155, 155, 0.3);
+}
+
+.result_cell td{
+	border: none;
+}
+
+.input_table tr:nth-child(3){
+  border-bottom: 20px solid transparent;
+}
+.slider {
+  -webkit-appearance: none;
+  background: #d3d3d3;
+  min-width: 300px;
+  max-height: 10px;
+  outline: none;
+  opacity: 0.7;
+  -webkit-transition: .2s;
+  transition: opacity .2s;
+}
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 15px;
+  height: 20px;
+  background: #4CAF50;
+  cursor: pointer;
+}
+.slider:hover {
+  opacity: 1;
+}
+
+/* The snackbar - position it at the bottom and in the middle of the screen */
+#snackbar {
+  visibility: hidden;
+  min-width: 250px;
+  margin-left: -160px;
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  border-radius: 2px;
+  padding: 16px;
+  position: fixed;
+  z-index: 1;
+  left: 50%;
+  top: 30px;
+  font-size: 17px;
+}
+
+#snackbar.show {
+  visibility: visible;
+  -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+  animation: fadein 0.5s, fadeout 0.5s 2.5s;
+}
+
+@-webkit-keyframes fadein {
+  from {top: 0; opacity: 0;} 
+  to {top: 30px; opacity: 1;}
+}
+
+@keyframes fadein {
+  from {top: 0; opacity: 0;}
+  to {top: 30px; opacity: 1;}
+}
+
+@-webkit-keyframes fadeout {
+  from {top: 30px; opacity: 1;} 
+  to {top: 0; opacity: 0;}
+}
+
+@keyframes fadeout {
+  from {top: 30px; opacity: 1;}
+  to {top: 0; opacity: 0;}
+}
+
+.sidenav {
+  position: fixed;
+  width: 250px;
+}
+
+</style>
+</head>
+
+<body onload="init()">
+
+<div class="sidenav">
+<button id="toggleInputVisibility" onclick="toggleInputVisibility()">Hide Input Area</button><br><br>
+<div id="manual">
+Instructions:<br>
+1. Set the number of chromosomes by dragging the range bar<br>
+2. Write genotypes into the text boxes<br>
+3. Click on the little color boxes to change chromosome text colors<br>
+4: Click on 'Generate' to get the Punnett Square<br><br>
+For better printing layout, click the 'Hide Input Area' button first<br>
+</div>
+</div>
+
+<div id="input_section" align="center">
+
+<table class="input_table">
+<tr><td colspan="5" id="labelN">Number of Chromosomes: 3</td></tr>
+<tr><td colspan="5"><input type="range" min="1" max="4" value="3" class="slider" onchange="changeN(this.value)" oninput="changeN(this.value)"></td></tr>
+<tr><td style="text-align:left;">1</td><td>&nbsp;</td><td>&nbsp;</td><td style="text-align:right;">4</td></tr>
+</table>
+
+
+<table id="table_input">
+	<tr/><tr/><tr style="border-bottom: 25px solid transparent"/><tr/><tr/><tr/>
+</table>
+<br>
+<button onclick="generate()">Generate</button><br><br>
+<div id="snackbar">Please fill in all the chromosomes before clicking 'Generate'</div>
+
+</div>
+
+<div id="result_section" align="center" style="visibility: hidden;">
+<!-- <button onclick="rotateTable() hidden">Rotate Table 90 degrees</button> -->
+<button onclick="window.print();">Print</button>
+<br><br>
+<table class="result_table" id="table_output"></table>
+</div>
+</body>
+
+<script>
+var input_rows = document.getElementById("table_input").rows;
+var N = 0, maxN = 4;
+var rawChromosomes = [];
+var rotation = false;
+var inputVisible = true;
+var colors = {};
+var defaultColor = "#000000"
+colors["carrie"] = "#FF0000";
+colors["wenhao"] = "#0000FF";
+var resultVisible = false;
+
+function generate() {
+	// update the raw values
+	// break if there are empty fields
+	var canProceed = updateRawChromosomes();
+	if (canProceed == false)
+	{
+		console.log("can't proceed");
+		var x = document.getElementById("snackbar");
+		x.className = "show";
+		setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000);
+		return;
+	}
+	// generate chromosome sets
+	var chromosomeSets = collectChromosomeSets();
+	
+	// generate chromosome permutations
+	var malePermutation = getPermutation(chromosomeSets[0]);
+	var femalePermutation = getPermutation(chromosomeSets[1]);
+	
+	// draw cross table
+	drawResultTable(malePermutation, femalePermutation);
+	
+	document.getElementById("result_section").style.visibility = "visible";
+	resultVisible = true;
+}
+
+function drawResultTable(male, female) {
+	var table = document.getElementById("table_output");
+	table.innerHTML = "";
+	var firstRow = table.insertRow();
+	firstRow.insertCell();
+	for (var i=0; i<male.length; i++)
+		firstRow.insertCell().innerHTML = "<th scope=\"col\">"+joinWithColor(male[i], " ; ")+"</th>";
+	for (var i=0; i<female.length; i++)
+	{
+		var row = table.insertRow();
+		row.insertCell().innerHTML = "<th scope=\"row\">"+joinWithColor(female[i], " ; ")+"</th>";
+		for (j=0; j<male.length; j++)
+			row.insertCell();
+	}
+	var rows = table.rows;
+	for (var i=0; i<female.length; i++)
+	for (var j=0; j<male.length; j++)
+	{
+		var cell = rows[i+1].cells[j+1];
+		cell.appendChild(generateResultTableCell(male[j], female[i]));
+	}
+}
+
+function generateResultTableCell(male, female) {
+// Inside each result table cell there is a table
+// This table has 3 rows and N columns
+// Row 0 displays chromosomes from the male parent
+// Row 1 displays the separators
+// Row 2 displays chromosomes from the female parent
+	var table = document.createElement("table");
+	table.className = "result_cell";
+	table.align = "center";
+	for (var i=0; i<3; i++)
+		table.insertRow();
+	for (var i=0; i<N; i++)
+	{
+		if (i>0) {
+			table.rows[0].insertCell();
+			table.rows[1].insertCell().innerHTML = ";";
+			table.rows[2].insertCell();
+		}
+		table.rows[0].insertCell().innerHTML = addColor(male[i]);
+		table.rows[1].insertCell().innerHTML = "<hr>";
+		table.rows[2].insertCell().innerHTML = addColor(female[i]);
+	}
+	return table;
+}
+
+function addColor(chromosome) {
+	var color = (chromosome in colors)? colors[chromosome] : defaultColor;
+	return "<span style=\"color:"+color+"\">"+chromosome+"</span>";
+}
+
+function joinWithColor(chromosomes, sep) {
+	var len = chromosomes.length;
+	var res = "[";
+	for (var i=0; i<len; i++)
+	{
+		if (i>0)
+			res+=sep;
+		res += addColor(chromosomes[i]);
+	}
+	return res+"]";
+}
+
+function getPermutation(set) {
+	var queue = [];
+	for (var i=0; i<set[0].length; i++)
+		queue.push([set[0][i]]);
+	
+	for (var i=1; i<N; i++) {
+		var count = queue.length;
+		while (count-- > 0) {
+			var partialList = queue.shift();
+			for (var j=0; j<set[i].length; j++) {
+				var newList = partialList.slice(0);
+				newList.push(set[i][j]);
+				queue.push(newList);
+			}
+		}
+	}
+	return queue;
+}
+
+function collectChromosomeSets() {
+	var male_chromoSets = new Array(N);
+	var female_chromoSets = new Array(N);
+	for (var j=0; j<N; j++) {
+		male_chromoSets[j] = [];
+		male_chromoSets[j].push(rawChromosomes[0][j]);
+		if (rawChromosomes[0][j] != rawChromosomes[1][j])
+			male_chromoSets[j].push(rawChromosomes[1][j]);
+
+		female_chromoSets[j] = [];
+		female_chromoSets[j].push(rawChromosomes[2][j]);
+		if (rawChromosomes[2][j] != rawChromosomes[3][j])
+			female_chromoSets[j].push(rawChromosomes[3][j]);
+	}
+	return [male_chromoSets, female_chromoSets];
+}
+
+function updateRawChromosomes() {
+	var canProceed = true;
+	for (var i = 0; i < 4; i++) // 4 rows: first 2 rows are Male, next 2 rows are Female
+	{
+		if (!rawChromosomes[i])
+			rawChromosomes[i] = [];
+		for (var j = 0; j < N; j++) // N cols: N chromosome pairs
+		{
+			var r = i<2? i*2 : i*2-1;
+			var c = j*2+1;
+			var input = input_rows[r].cells[c].children[0].value.trim();
+			rawChromosomes[i][j] = input;
+			if (input == "")
+			{
+				canProceed = false;
+				console.log("empty field in "+i+" "+j);
+			}
+			//console.log(`i/j/val = ${i}/${j}/${input}`);
+		}
+	}
+	return canProceed;
+}
+
+function init() {
+	var labels = ["Male:","Female:"];
+	for (var i=0; i<6; i+=3) {
+		input_rows[i].insertCell();
+		input_rows[i+1].insertCell().innerHTML = labels[i/3];
+		input_rows[i+2].insertCell();
+	}
+	changeN(3);
+}
+
+function changeN(newN) {
+	while (N < newN)
+		increaseN();
+	while (N > newN)
+		decreaseN();
+	document.getElementById("labelN").innerHTML = "Number of Chromosomes: "+N;
+}
+
+function decreaseN() {
+	if (N == 0)
+		return;
+	for (var i=0; i<6; i+=3) {
+
+		input_rows[i].deleteCell(-1);
+		input_rows[i+1].deleteCell(-1);
+		input_rows[i+2].deleteCell(-1);
+		if (N > 1) {
+			input_rows[i].deleteCell(-1);
+			input_rows[i+1].deleteCell(-1);
+			input_rows[i+2].deleteCell(-1);
+		}
+	}
+	N--;
+}
+
+function increaseN() {
+	if (N >= maxN)
+		return;
+	
+	for (var i=0; i<6; i+=3) {
+		if (N > 0 && N < maxN) {
+			input_rows[i].insertCell();
+			input_rows[i+1].insertCell().innerHTML = "&nbsp;;&nbsp;";
+			input_rows[i+2].insertCell();
+		}
+		var r = Math.floor((i+1)/2);
+		input_rows[i].insertCell().innerHTML = newInputElement(true, r, N) + newColorPicker(r, N);
+		input_rows[i+1].insertCell().innerHTML = "<hr>";
+		input_rows[i+2].insertCell().innerHTML = newInputElement(true, r+1, N) + newColorPicker(r+1, N);
+	}
+	N++;
+}
+
+function toggleInputVisibility() {
+	inputVisible = !inputVisible;
+	var inputSection = document.getElementById("input_section");
+	var manualSection = document.getElementById("manual");
+	if (inputVisible) {
+		document.getElementById("toggleInputVisibility").innerText = "Hide Input Area";
+		inputSection.style.display = "block";
+		manualSection.style.display = "block";
+	}
+	else
+	{
+		document.getElementById("toggleInputVisibility").innerText = "Show Input Area";
+		inputSection.style.display = "none";
+		manualSection.style.display = "none";
+	}
+}
+
+function updateColor(i, j, color) {
+	// first update all the texts
+	var canGenerate = updateRawChromosomes();
+	// do nothing if the input is empty
+	var c = rawChromosomes[i][j];
+	if (c == "")
+		return;
+	
+	// update color dictionary
+	colors[c] = color;
+	console.log(c+" " + color);
+	
+	// change all the input elements that have the same text
+	for (var i=0; i<input_rows.length; i++)
+	for (var j=1; j<input_rows[i].cells.length; j+=2)
+	{
+		var input = input_rows[i].cells[j].children[0];
+		if (input.value == c)
+		{
+			input.style.backgroundColor = color;
+			input_rows[i].cells[j].children[1].value = color;
+		}
+	}
+	
+	if (resultVisible && canGenerate)
+		generate();
+}
+
+function newColorPicker(i, j) {
+	return "<input class=\"colorPicker\" type=\"color\" value=\""+defaultColor+"\" onchange=\"updateColor("+i+", "+j+", this.value)\"/>";
+}
+
+function newInputElement(fillRandom, i, j) {
+	return fillRandom?
+	"<input class=\"chromosome_input\" value=\""+(rawChromosomes[i] && rawChromosomes[i][j]?rawChromosomes[i][j]:randomChar())+"\"/>" : 
+	"<input/>";
+}
+
+function randomChar() {
+	return String.fromCharCode(Math.floor(Math.random()*26)+"A".charCodeAt(0));
+}
+
+</script>
+<html>
