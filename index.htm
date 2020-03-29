@@ -102,7 +102,6 @@ td {
 
 .sidenav {
   position: fixed;
-  top: 0px;
   width: 250px;
 }
 
@@ -112,9 +111,8 @@ td {
 <body onload="init()">
 <button id="toggleInputVisibility" onclick="toggleInputVisibility()">Hide Input Area</button>
 <div class="sidenav">
-<br><br>
 <div id="manual">
-Instructions:<br>
+<br>Instructions:<br>
 1. Set the number of chromosomes by dragging the range bar<br>
 2. Write genotypes into the text boxes<br>
 3. Click on the little color boxes to change chromosome text colors<br>
@@ -323,8 +321,8 @@ function init() {
 	
 	var manual = document.getElementById("manual");
 	var rect = manual.getBoundingClientRect();
-	var thresh = rect.bottom;
-	console.log(rect.top, rect.right, rect.bottom, rect.left);
+	var thresh = rect.bottom/2;
+	//console.log(rect.top, rect.right, rect.bottom, rect.left);
 	window.onscroll = function() {
 		var currentScrollPos = window.pageYOffset;
 		console.log(currentScrollPos+" "+thresh);
@@ -332,7 +330,7 @@ function init() {
 			manual.style.display = "none";
 		else if (currentScrollPos < 100)
 			manual.style.display = "block";
-		console.log(currentScrollPos);
+		//console.log(currentScrollPos);
 	}
 }
 
