@@ -102,6 +102,7 @@ td {
 
 .sidenav {
   position: fixed;
+  top: 0px;
   width: 250px;
 }
 
@@ -159,6 +160,7 @@ var defaultColor = "#000000"
 colors["carrie"] = "#FF0000";
 colors["wenhao"] = "#0000FF";
 var resultVisible = false;
+
 
 function generate() {
 	// update the raw values
@@ -318,6 +320,20 @@ function init() {
 		input_rows[i+2].insertCell();
 	}
 	changeN(3);
+	
+	var manual = document.getElementById("manual");
+	var rect = manual.getBoundingClientRect();
+	var thresh = rect.bottom;
+	console.log(rect.top, rect.right, rect.bottom, rect.left);
+	window.onscroll = function() {
+		var currentScrollPos = window.pageYOffset;
+		console.log(currentScrollPos+" "+thresh);
+		if (currentScrollPos > thresh)
+			manual.style.display = "none";
+		else if (currentScrollPos < 100)
+			manual.style.display = "block";
+		console.log(currentScrollPos);
+	}
 }
 
 function changeN(newN) {
