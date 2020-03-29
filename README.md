@@ -1,2 +1,2 @@
 # Punnett_Square_Generator
-Punnett Square generator that supports customized colors
+A Punnett Square generator that is printer-friently and supports custom colors
