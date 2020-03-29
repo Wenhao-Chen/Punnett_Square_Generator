@@ -97,10 +97,6 @@ td {text-align: center;}
 	float:left;  
 }
 
-#input_section{ 
-
-} 
-
 #diagonal {
 	background: linear-gradient(to top right, #fff calc(50% - 1px), #aaa, #fff calc(50% + 1px) )
 }
@@ -110,6 +106,7 @@ td {text-align: center;}
 <body onload="init()">
 
 <button id="toggleInputVisibility" onclick="toggleInputVisibility()">Hide Input Area</button>
+<button onclick="reset()">Reset Input</button>
 
 <div id="top_area">
 <div id="manual">
@@ -117,15 +114,16 @@ td {text-align: center;}
 	<ol>
 	<li>Set the number of chromosomes by dragging the range bar</li>
 	<li>Write genotypes into the text boxes</li>
-	<li>Click on the little color boxes to change chromosome text colors</li>
-	<li>Click on 'Generate' to get the Punnett Square</li>
+	<li>Change chromosome colors by clicking the little color boxes</li>
+	<li>Generate the Punnett Square by clicking on 'Generate'</li>
 	</ol>
-	For better printing layout, click the 'Hide Input Area' button first<br>
+	<p>For better printing layout, click on 'Hide Input Area'</p>
+	<p>To reset chromosomes, click on 'Reset Input'</p>
 </div>
 <div id="input_section" align="center">
 	<table class="input_table">
 		<tr><td colspan="5" id="labelN">Number of Chromosomes: 3</td></tr>
-		<tr><td colspan="5"><input type="range" min="1" max="4" value="3" class="slider" onchange="changeN(this.value)" oninput="changeN(this.value)"></td></tr>
+		<tr><td colspan="5"><input id="Nbar" type="range" min="1" max="4" value="3" class="slider" onchange="changeN(this.value)" oninput="changeN(this.value)"></td></tr>
 		<tr><td style="text-align:left;">1</td><td>&nbsp;</td><td>&nbsp;</td><td style="text-align:right;">4</td></tr>
 	</table>
 	<table id="table_input">
@@ -137,6 +135,7 @@ td {text-align: center;}
 
 <br><br>
 <div id="snackbar">Please fill in all the chromosomes before clicking 'Generate'</div>
+<input id="file_chooser" type="file" style="display: none" />
 	
 <div id="result_section" align="center" style="visibility: hidden;">
 	<button onclick="window.print();">Print</button>
@@ -180,6 +179,8 @@ function generate() {
 	
 	document.getElementById("result_section").style.visibility = "visible";
 	resultVisible = true;
+	
+	saveConfiguration();
 }
 
 function drawResultTable(male, female) {
@@ -322,15 +323,52 @@ function init() {
 		input_rows[i+1].insertCell().innerHTML = labels[i/3];
 		input_rows[i+2].insertCell();
 	}
-	changeN(3);
+	loadConfiguration();
 }
 
-function changeN(newN) {
+function loadConfiguration() {
+	if (typeof(Storage) !== "undefined" && localStorage.getItem("N")) {
+	
+		var prevN = JSON.parse(localStorage.getItem("N"));
+
+		rawChromosomes = JSON.parse(localStorage.getItem("rawChromosomes"));
+		colors = JSON.parse(localStorage.getItem("colors"));
+
+		console.log("loaded N = "+prevN);
+		console.log("loaded RawC = " + localStorage.getItem("rawChromosomes"));
+		console.log("loaded colors = " + localStorage.getItem("colors"));
+		changeN(prevN, true);
+	} else {
+	  changeN(3, true);
+	}
+}
+
+function saveConfiguration() {
+	if (typeof(Storage) !== "undefined") {
+	  localStorage.setItem("N", JSON.stringify(N));
+	  localStorage.setItem("rawChromosomes", JSON.stringify(rawChromosomes));
+	  localStorage.setItem("colors", JSON.stringify(colors));
+	  console.log("saved RawC: " + localStorage.getItem("rawChromosomes"));
+	  console.log("saved N: " + localStorage.getItem("N"));
+	  console.log("saved colors: " + localStorage.getItem("colors"));
+	}
+}
+
+function deleteConfiguration() {
+	if (typeof(Storage) !== "undefined") {
+	  localStorage.removeItem("N");
+	  localStorage.removeItem("rawChromosomes");
+	  localStorage.removeItem("colors");
+	}
+}
+
+function changeN(newN, fill) {
 	while (N < newN)
-		increaseN();
+		increaseN(fill);
 	while (N > newN)
 		decreaseN();
 	document.getElementById("labelN").innerHTML = "Number of Chromosomes: "+N;
+	document.getElementById("Nbar").value = newN;
 }
 
 function decreaseN() {
@@ -350,7 +388,7 @@ function decreaseN() {
 	N--;
 }
 
-function increaseN() {
+function increaseN(fillInput) {
 	if (N >= maxN)
 		return;
 	
@@ -361,11 +399,27 @@ function increaseN() {
 			input_rows[i+2].insertCell();
 		}
 		var r = Math.floor((i+1)/2);
-		input_rows[i].insertCell().innerHTML = newInputElement(true, r, N) + newColorPicker(r, N);
+		
+		var cell1 = input_rows[i].insertCell();
+		cell1.innerHTML = newInputElement(fillInput, r, N) + newColorPicker(r, N);
+		matchInputAndColorPicker(cell1.children[0], cell1.children[1]);
 		input_rows[i+1].insertCell().innerHTML = "<hr>";
-		input_rows[i+2].insertCell().innerHTML = newInputElement(true, r+1, N) + newColorPicker(r+1, N);
+		var cell2 = input_rows[i+2].insertCell();
+		cell2.innerHTML = newInputElement(fillInput, r+1, N) + newColorPicker(r+1, N);
+		matchInputAndColorPicker(cell2.children[0], cell2.children[1]);
 	}
 	N++;
+}
+
+function matchInputAndColorPicker(input, colorPicker) {
+	if (input.value in colors)
+	{
+		console.log("matching")
+		var color = colors[input.value];
+		input.style.backgroundColor = color;
+		colorPicker.value = color;
+	}
+		
 }
 
 function toggleInputVisibility() {
@@ -413,18 +467,46 @@ function updateColor(i, j, color) {
 		generate();
 }
 
-function newColorPicker(i, j) {
-	return "<input class=\"colorPicker\" type=\"color\" value=\""+defaultColor+"\" onchange=\"updateColor("+i+", "+j+", this.value)\"/>";
+function newColorPicker(i, j, color) {
+	return "<input class=\"colorPicker\" type=\"color\" value=\""+(color?color:defaultColor)+"\" onchange=\"updateColor("+i+", "+j+", this.value)\"/>";
 }
 
-function newInputElement(fillRandom, i, j) {
-	return fillRandom?
+function newInputElement(fill, i, j) {
+	return fill?
 	"<input class=\"chromosome_input\" value=\""+(rawChromosomes[i] && rawChromosomes[i][j]?rawChromosomes[i][j]:randomChar())+"\"/>" : 
 	"<input/>";
 }
 
 function randomChar() {
 	return String.fromCharCode(Math.floor(Math.random()*26)+"A".charCodeAt(0));
+}
+
+
+// Function to download data to a file
+function download(data, filename, type) {
+    var file = new Blob([data], {type: type});
+    if (window.navigator.msSaveOrOpenBlob) // IE10+
+        window.navigator.msSaveOrOpenBlob(file, filename);
+    else { // Others
+        var a = document.createElement("a"),
+                url = URL.createObjectURL(file);
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function() {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);  
+        }, 0); 
+    }
+}
+
+function reset() {
+	rawChromosomes = [];
+	colors = {};
+	changeN(0);
+	changeN(3, true);
+	deleteConfiguration();
 }
 
 </script>
